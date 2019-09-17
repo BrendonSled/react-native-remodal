@@ -1,0 +1,51 @@
+{
+    "name": "react-native-remodal",
+    "version": "1.0.0-alpha.2",
+    "description": "A \"re\" implementation of the classic react native modal",
+    "main": "dist/index.js",
+    "private": false,
+    "scripts": {
+        "build": "tsc -p ."
+    },
+    "keywords": [
+        "modal",
+        "react",
+        "react",
+        "native"
+    ],
+    "author": "Brendon Sled",
+    "license": "MIT",
+    "dependencies": {
+        "cuid": "^2.1.6"
+    },
+    "peerDependencies": {
+        "react": "^16.8.6",
+        "react-native": "^0.59.10",
+        "react-native-reanimated": "^1.2.0"
+    },
+    "devDependencies": {
+        "@types/react": "^16.9.2",
+        "@types/react-native": "^0.60.15",
+        "react": "^16.9.0",
+        "react-native": "^0.60.5",
+        "react-native-reanimated": "^1.2.0",
+        "tslib": "^1.10.0",
+        "typescript": "^3.6.3"
+    },
+    "prettier": {
+        "arrowParens": "always",
+        "bracketSpacing": true,
+        "htmlWhitespaceSensitivity": "css",
+        "insertPragma": false,
+        "jsxBracketSameLine": false,
+        "jsxSingleQuote": false,
+        "proseWrap": "preserve",
+        "requirePragma": false,
+        "semi": true,
+        "singleQuote": true,
+        "trailingComma": "all",
+        "useTabs": false,
+        "tabWidth": 4,
+        "printWidth": 140
+    }
+}
