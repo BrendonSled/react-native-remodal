@@ -1,6 +1,6 @@
 {
     "name": "react-native-remodal",
-    "version": "1.0.0-alpha.3",
+    "version": "1.0.0-alpha.4",
     "description": "A \"re\" implementation of the classic react native modal",
     "repository": {
         "type": "git",
