@@ -1,5 +1,7 @@
 # React Navigation ReModal
 
+![Recording](recording.gif)
+
 # Getting Started
 
 **Requirements**
