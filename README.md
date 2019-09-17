@@ -34,12 +34,17 @@ npm install react-native-remodal
 
 ## `<ReModal/>`
 
+-   `children`: React.ReactElement;
 -   `isVisible`: boolean;
 -   `onCancel`?: () => void;
 -   `autoCloseWhenOpeningNextDialog`?: boolean;
--   `modalAnimationFunction`?: (gestureState: Animated.Adaptable<number>, opacity: Animated.Adaptable<number>) => any;
+-   `modalAnimationFunction`?: (gestureState: Animated.Adaptable<number>, opacity: Animated.Adaptable<number>, modalLayout?: {
+          width: Animated.Adaptable<number>;
+          height: Animated.Adaptable<number>;
+    })=> any;
 -   `onModalShow`?: () => void;
 -   `onModalHide`?: () => void;
+-   `containerStyle`?: ViewStyle;
 
 # Full Example
 
@@ -70,5 +75,4 @@ export default function ModalTest(props) {
         </View>
     );
 }
-
 ```

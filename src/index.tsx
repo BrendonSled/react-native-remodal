@@ -1,6 +1,6 @@
 import cuid from 'cuid';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { BackHandler, Platform, SafeAreaView, StyleSheet, TouchableWithoutFeedback } from 'react-native';
+import { BackHandler, Platform, SafeAreaView, StyleSheet, TouchableWithoutFeedback, ViewStyle } from 'react-native';
 import Animated, { Easing } from 'react-native-reanimated';
 
 interface IReModalContext {
@@ -91,17 +91,20 @@ function Modal({
     viewStyleFnc,
     onModalShow,
     onModalHide,
+    containerStyle,
 }: {
     children: any;
     onCancel?: () => void;
     isVisible: boolean;
-    viewStyleFnc: (gestureState: Animated.Adaptable<number>, opacity: Animated.Adaptable<number>) => any;
+    viewStyleFnc: Required<IReModalProps>['modalAnimationFunction'];
     onModalShow?: () => void;
     onModalHide?: () => void;
+    containerStyle?: ViewStyle;
 }) {
+    const modalLayout = useRef({ width: new Value<number>(-1), height: new Value<number>(-1) });
     const { current: animationState } = useRef(new Value<number>(-1));
     const { current: opacity } = useRef(runOpacityTimer(animationState, onModalShow, onModalHide));
-    const { current: viewStyle } = useRef(viewStyleFnc(animationState, opacity as Animated.Adaptable<number>));
+    const { current: viewStyle } = useRef(viewStyleFnc(animationState, opacity as Animated.Adaptable<number>, modalLayout.current));
     const init = useRef(false);
 
     useEffect(() => {
@@ -112,12 +115,20 @@ function Modal({
     }, [isVisible]);
 
     return (
-        <Animated.View style={styles.container} pointerEvents={isVisible ? 'auto' : 'none'}>
+        <Animated.View style={[styles.container, containerStyle]} pointerEvents={isVisible ? 'auto' : 'none'}>
             <TouchableWithoutFeedback onPress={onCancel}>
                 <Animated.View style={[styles.backdrop, { opacity }]} />
             </TouchableWithoutFeedback>
             <SafeAreaView>
-                <Animated.View style={viewStyle}>{children}</Animated.View>
+                <Animated.View
+                    onLayout={(event) => {
+                        modalLayout.current.height.setValue(event.nativeEvent.layout.height);
+                        modalLayout.current.width.setValue(event.nativeEvent.layout.width);
+                    }}
+                    style={viewStyle}
+                >
+                    {children}
+                </Animated.View>
             </SafeAreaView>
         </Animated.View>
     );
@@ -175,6 +186,7 @@ export function ReModalProvider({ children }: { children: React.ReactNode }) {
                         viewStyleFnc={selectedView(key).modalAnimationFunction || defaultModalAnimationStyle}
                         onModalShow={selectedView(key).onModalShow}
                         onModalHide={selectedView(key).onModalHide}
+                        containerStyle={selectedView(key).containerStyle}
                     />
                 );
             })}
@@ -187,9 +199,14 @@ interface IReModalProps {
     isVisible: boolean;
     onCancel?: () => void;
     autoCloseWhenOpeningNextDialog?: boolean;
-    modalAnimationFunction?: (gestureState: Animated.Adaptable<number>, opacity: Animated.Adaptable<number>) => any;
+    modalAnimationFunction?: (
+        gestureState: Animated.Adaptable<number>,
+        opacity: Animated.Adaptable<number>,
+        modalLayout?: { width: Animated.Adaptable<number>; height: Animated.Adaptable<number> },
+    ) => any;
     onModalShow?: () => void;
     onModalHide?: () => void;
+    containerStyle?: ViewStyle;
 }
 
 export function ReModal({
@@ -200,6 +217,7 @@ export function ReModal({
     modalAnimationFunction = defaultModalAnimationStyle,
     onModalHide,
     onModalShow,
+    containerStyle,
 }: IReModalProps): null {
     const { setView, setVisible, setConfig } = useContext(ReModalContext);
     const { current: id } = useRef(cuid());
@@ -210,7 +228,7 @@ export function ReModal({
     }, [isVisible]);
 
     useEffect(() => {
-        setConfig(id, { onCancel, autoCloseWhenOpeningNextDialog, modalAnimationFunction, onModalHide, onModalShow });
+        setConfig(id, { onCancel, autoCloseWhenOpeningNextDialog, modalAnimationFunction, onModalHide, onModalShow, containerStyle });
     }, [onCancel]);
 
     useEffect(() => {
