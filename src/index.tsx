@@ -13,7 +13,7 @@ const ReModalContext = React.createContext<IReModalContext>(undefined as any);
 
 const { Value, block, timing, cond, stopClock, and, eq, neq, set, startClock, Clock, interpolate, Extrapolate, call } = Animated;
 
-enum State {
+export enum State {
     BEGAN,
     END,
 }
