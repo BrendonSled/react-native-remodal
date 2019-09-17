@@ -43,8 +43,8 @@ npm install react-native-remodal
 
 ```tsx
 import React, { useState } from 'react';
-import { Button, Dimensions, View } from 'react-native';
-import { ReModal } from 'react-native-remodal';
+import { Button, Dimensions, Text, View } from 'react-native';
+import { ReModel } from 'react-native-remodal';
 
 export default function ModalTest(props) {
     const [open1, setOpen1] = useState(false);
@@ -52,20 +52,21 @@ export default function ModalTest(props) {
 
     return (
         <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-            <ReModal isVisible={open1} onCancel={() => setOpen1(false)}>
-                <View style={{ width: Dimensions.get('window').width * 0.8, background: '#fff' }}>
+            <ReModel isVisible={open1} onCancel={() => setOpen1(false)}>
+                <View style={{ width: Dimensions.get('window').width * 0.8, backgroundColor: '#fff', padding: 32 }}>
                     <Text>This is a test!</Text>
-                    <Button onPress={() => setOpen2(true)}>Show Modal #2</Button>
+                    <Button onPress={() => setOpen2(true)} title="Show Modal #2" />
                 </View>
-            </ReModal>
-            <ReModal isVisible={open2} onCancel={() => setOpen2(false)}>
-                <View style={{ width: Dimensions.get('window').width * 0.8, background: '#fff' }}>
+            </ReModel>
+            <ReModel isVisible={open2} onCancel={() => setOpen2(false)}>
+                <View style={{ width: Dimensions.get('window').width * 0.8, backgroundColor: '#fff', padding: 32 }}>
                     <Text>This is another modal!</Text>
                 </View>
-            </ReModal>
-            <Button onPress={() => setOpen1(true)}>Show Modal #1</Button>
-            <Button onPress={() => setOpen2(true)}>Show Modal #2</Button>
+            </ReModel>
+            <Button onPress={() => setOpen1(true)} title="Show Modal #1" />
+            <Button onPress={() => setOpen2(true)} title="Show Modal #2" />
         </View>
     );
 }
+
 ```
