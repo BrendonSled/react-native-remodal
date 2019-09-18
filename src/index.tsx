@@ -1,6 +1,6 @@
 import cuid from 'cuid';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { BackHandler, Platform, SafeAreaView, StyleSheet, TouchableWithoutFeedback, ViewStyle } from 'react-native';
+import { BackHandler, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, TouchableWithoutFeedback, ViewStyle } from 'react-native';
 import Animated, { Easing } from 'react-native-reanimated';
 
 interface IReModalContext {
@@ -9,7 +9,7 @@ interface IReModalContext {
     setVisible: (key: string, visible: boolean) => void;
 }
 
-const ReModalContext = React.createContext<IReModalContext>(undefined as any);
+const ReModalContext = React.createContext<IReModalContext>({} as any);
 
 const { Value, block, timing, cond, stopClock, and, eq, neq, set, startClock, Clock, interpolate, Extrapolate, call } = Animated;
 
@@ -92,6 +92,8 @@ function Modal({
     onModalShow,
     onModalHide,
     containerStyle,
+    keyboardAvoiding = true,
+    keyboardVerticalOffset,
 }: {
     children: any;
     onCancel?: () => void;
@@ -100,6 +102,8 @@ function Modal({
     onModalShow?: () => void;
     onModalHide?: () => void;
     containerStyle?: ViewStyle;
+    keyboardAvoiding?: boolean;
+    keyboardVerticalOffset?: number;
 }) {
     const modalLayout = useRef({ width: new Value<number>(-1), height: new Value<number>(-1) });
     const { current: animationState } = useRef(new Value<number>(-1));
@@ -115,7 +119,13 @@ function Modal({
     }, [isVisible]);
 
     return (
-        <Animated.View style={[styles.container, containerStyle]} pointerEvents={isVisible ? 'auto' : 'none'}>
+        <KeyboardAvoidingView
+            behavior="height"
+            enabled={keyboardAvoiding}
+            keyboardVerticalOffset={keyboardVerticalOffset}
+            style={[styles.container, containerStyle]}
+            pointerEvents={isVisible ? 'auto' : 'none'}
+        >
             <TouchableWithoutFeedback onPress={onCancel}>
                 <Animated.View style={[styles.backdrop, { opacity }]} />
             </TouchableWithoutFeedback>
@@ -130,7 +140,7 @@ function Modal({
                     {children}
                 </Animated.View>
             </SafeAreaView>
-        </Animated.View>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -177,16 +187,14 @@ export function ReModalProvider({ children }: { children: React.ReactNode }) {
         >
             {children}
             {Object.entries(views).map(([key, view]) => {
+                const { modalAnimationFunction, ...props } = selectedView(key);
                 return (
                     <Modal
+                        {...props}
                         children={view}
                         isVisible={visibleView.current[key]}
                         key={key}
-                        onCancel={selectedView(key).onCancel}
-                        viewStyleFnc={selectedView(key).modalAnimationFunction || defaultModalAnimationStyle}
-                        onModalShow={selectedView(key).onModalShow}
-                        onModalHide={selectedView(key).onModalHide}
-                        containerStyle={selectedView(key).containerStyle}
+                        viewStyleFnc={modalAnimationFunction || defaultModalAnimationStyle}
                     />
                 );
             })}
@@ -207,20 +215,23 @@ interface IReModalProps {
     onModalShow?: () => void;
     onModalHide?: () => void;
     containerStyle?: ViewStyle;
+    keyboardAvoiding?: boolean;
+    keyboardVerticalOffset?: number;
 }
 
 export function ReModal({
     children,
     isVisible,
-    onCancel,
     autoCloseWhenOpeningNextDialog = true,
     modalAnimationFunction = defaultModalAnimationStyle,
-    onModalHide,
-    onModalShow,
-    containerStyle,
+    ...rest
 }: IReModalProps): null {
     const { setView, setVisible, setConfig } = useContext(ReModalContext);
     const { current: id } = useRef(cuid());
+
+    if (!setView) {
+        throw new Error('<ReModal/> is placed outside of a <ReModalProvider/>. Make sure <ReModalProvider/> is wrapping your root component.');
+    }
 
     useEffect(() => {
         setVisible(id, isVisible);
@@ -228,8 +239,8 @@ export function ReModal({
     }, [isVisible]);
 
     useEffect(() => {
-        setConfig(id, { onCancel, autoCloseWhenOpeningNextDialog, modalAnimationFunction, onModalHide, onModalShow, containerStyle });
-    }, [onCancel]);
+        setConfig(id, { autoCloseWhenOpeningNextDialog, modalAnimationFunction, ...rest });
+    }, [rest, autoCloseWhenOpeningNextDialog, modalAnimationFunction]);
 
     useEffect(() => {
         const element = React.cloneElement(children);
