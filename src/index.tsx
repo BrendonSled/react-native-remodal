@@ -81,7 +81,7 @@ function defaultModalAnimationStyle(gestureState: Animated.Adaptable<number>, op
         1,
     );
 
-    return { opacity: opacityIn, transform: [{ scale: scaleIn }, { perspective: 200 }] };
+    return { opacity: opacityIn, transform: [{ scale: scaleIn }] };
 }
 
 function Modal({
@@ -222,7 +222,7 @@ interface IReModalProps {
 export function ReModal({
     children,
     isVisible,
-    autoCloseWhenOpeningNextDialog = true,
+    autoCloseWhenOpeningNextDialog = false,
     modalAnimationFunction = defaultModalAnimationStyle,
     ...rest
 }: IReModalProps): null {
@@ -230,7 +230,9 @@ export function ReModal({
     const { current: id } = useRef(cuid());
 
     if (!setView) {
-        throw new Error('<ReModal/> is placed outside of a <ReModalProvider/>. Make sure <ReModalProvider/> is wrapping your root component.');
+        throw new Error(
+            '<ReModal/> is placed outside of a <ReModalProvider/>. Make sure <ReModalProvider/> is wrapping your root component.',
+        );
     }
 
     useEffect(() => {
