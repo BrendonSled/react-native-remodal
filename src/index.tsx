@@ -18,7 +18,19 @@ export enum State {
     END,
 }
 
-const runOpacityTimer = (gestureState: Animated.Adaptable<number>, onModalShow?: () => void, onModalHide?: () => void) => {
+const runOpacityTimer = (
+    gestureState: Animated.Adaptable<number>,
+    onModalShow?: () => void,
+    onModalHide?: () => void,
+    onShowConfig = {
+        duration: Platform.OS === 'ios' ? 300 : 240,
+        easing: Easing.inOut(Easing.ease),
+    },
+    onHideConfig = {
+        duration: Platform.OS === 'ios' ? 300 : 240,
+        easing: Easing.inOut(Easing.ease),
+    },
+) => {
     const clock = new Clock();
     const state = {
         finished: new Value(0),
@@ -27,28 +39,28 @@ const runOpacityTimer = (gestureState: Animated.Adaptable<number>, onModalShow?:
         frameTime: new Value(0),
     };
 
-    const config = {
-        duration: Platform.OS === 'ios' ? 300 : 240,
-        toValue: new Value(-1),
-        easing: Easing.inOut(Easing.ease),
-    };
+    const toValue = new Value(-1);
 
     return block([
-        cond(and(eq(gestureState, State.BEGAN), neq(config.toValue, 1)), [
+        cond(and(eq(gestureState, State.BEGAN), neq(toValue, 1)), [
             set(state.finished, 0),
             set(state.time, 0),
             set(state.frameTime, 0),
-            set(config.toValue, 1),
+            set(toValue, 1),
             startClock(clock),
         ]),
-        cond(and(eq(gestureState, State.END), neq(config.toValue, 0)), [
+        cond(and(eq(gestureState, State.END), neq(toValue, 0)), [
             set(state.finished, 0),
             set(state.time, 0),
             set(state.frameTime, 0),
-            set(config.toValue, 0),
+            set(toValue, 0),
             startClock(clock),
         ]),
-        timing(clock, state, config),
+        cond(
+            eq(gestureState, State.BEGAN),
+            timing(clock, state, { ...onShowConfig, toValue: toValue }),
+            timing(clock, state, { ...onHideConfig, toValue: toValue }),
+        ),
         cond(state.finished, stopClock(clock)),
         onModalShow && cond(and(state.finished, eq(gestureState, State.BEGAN)), call([], onModalShow)),
         onModalHide && cond(and(state.finished, eq(gestureState, State.END)), call([], onModalHide)),
@@ -84,6 +96,11 @@ function defaultModalAnimationStyle(gestureState: Animated.Adaptable<number>, op
     return { opacity: opacityIn, transform: [{ scale: scaleIn }] };
 }
 
+interface IConfigs {
+    duration: number;
+    easing: Animated.EasingFunction;
+}
+
 function Modal({
     children,
     onCancel,
@@ -94,6 +111,8 @@ function Modal({
     containerStyle,
     keyboardAvoiding = true,
     keyboardVerticalOffset,
+    onShowConfig,
+    onHideConfig,
 }: {
     children: any;
     onCancel?: () => void;
@@ -104,10 +123,12 @@ function Modal({
     containerStyle?: ViewStyle;
     keyboardAvoiding?: boolean;
     keyboardVerticalOffset?: number;
+    onShowConfig?: IConfigs;
+    onHideConfig?: IConfigs;
 }) {
     const modalLayout = useRef({ width: new Value<number>(-1), height: new Value<number>(-1) });
     const { current: animationState } = useRef(new Value<number>(-1));
-    const { current: opacity } = useRef(runOpacityTimer(animationState, onModalShow, onModalHide));
+    const { current: opacity } = useRef(runOpacityTimer(animationState, onModalShow, onModalHide, onShowConfig, onHideConfig));
     const { current: viewStyle } = useRef(viewStyleFnc(animationState, opacity as Animated.Adaptable<number>, modalLayout.current));
     const init = useRef(false);
 
@@ -217,6 +238,8 @@ interface IReModalProps {
     containerStyle?: ViewStyle;
     keyboardAvoiding?: boolean;
     keyboardVerticalOffset?: number;
+    onShowConfig?: IConfigs;
+    onHideConfig?: IConfigs;
 }
 
 export function ReModal({
