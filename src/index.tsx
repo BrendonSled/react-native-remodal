@@ -20,6 +20,7 @@ export enum State {
 
 const runOpacityTimer = (
     gestureState: Animated.Adaptable<number>,
+    modalLayout: IModalLayout,
     onModalShow?: () => void,
     onModalHide?: () => void,
     onShowConfig = {
@@ -41,35 +42,39 @@ const runOpacityTimer = (
 
     const toValue = new Value(-1);
 
-    return block([
-        cond(and(eq(gestureState, State.BEGAN), neq(toValue, 1)), [
-            set(state.finished, 0),
-            set(state.time, 0),
-            set(state.frameTime, 0),
-            set(toValue, 1),
-            startClock(clock),
+    return cond(
+        neq(modalLayout.height, -1),
+        block([
+            cond(and(eq(gestureState, State.BEGAN), neq(toValue, 1)), [
+                set(state.finished, 0),
+                set(state.time, 0),
+                set(state.frameTime, 0),
+                set(toValue, 1),
+                startClock(clock),
+            ]),
+            cond(and(eq(gestureState, State.END), neq(toValue, 0)), [
+                set(state.finished, 0),
+                set(state.time, 0),
+                set(state.frameTime, 0),
+                set(toValue, 0),
+                startClock(clock),
+            ]),
+            cond(
+                eq(gestureState, State.BEGAN),
+                timing(clock, state, { ...onShowConfig, toValue: toValue }),
+                timing(clock, state, { ...onHideConfig, toValue: toValue }),
+            ),
+            cond(state.finished, stopClock(clock)),
+            onModalShow ? cond(and(state.finished, eq(gestureState, State.BEGAN)), call([], onModalShow)) : 0,
+            onModalHide ? cond(and(state.finished, eq(gestureState, State.END)), call([], onModalHide)) : 0,
+            interpolate(state.position, {
+                inputRange: [0, 1],
+                outputRange: [0, 1],
+                extrapolate: Extrapolate.CLAMP,
+            }),
         ]),
-        cond(and(eq(gestureState, State.END), neq(toValue, 0)), [
-            set(state.finished, 0),
-            set(state.time, 0),
-            set(state.frameTime, 0),
-            set(toValue, 0),
-            startClock(clock),
-        ]),
-        cond(
-            eq(gestureState, State.BEGAN),
-            timing(clock, state, { ...onShowConfig, toValue: toValue }),
-            timing(clock, state, { ...onHideConfig, toValue: toValue }),
-        ),
-        cond(state.finished, stopClock(clock)),
-        onModalShow && cond(and(state.finished, eq(gestureState, State.BEGAN)), call([], onModalShow)),
-        onModalHide && cond(and(state.finished, eq(gestureState, State.END)), call([], onModalHide)),
-        interpolate(state.position, {
-            inputRange: [0, 1],
-            outputRange: [0, 1],
-            extrapolate: Extrapolate.CLAMP,
-        }),
-    ]);
+        0,
+    );
 };
 
 function defaultModalAnimationStyle(gestureState: Animated.Adaptable<number>, opacity: Animated.Adaptable<number>) {
@@ -101,6 +106,11 @@ interface IConfigs {
     easing: Animated.EasingFunction;
 }
 
+interface IModalLayout {
+    width: Animated.Value<number>;
+    height: Animated.Value<number>;
+}
+
 function Modal({
     children,
     onCancel,
@@ -128,7 +138,9 @@ function Modal({
 }) {
     const modalLayout = useRef({ width: new Value<number>(-1), height: new Value<number>(-1) });
     const { current: animationState } = useRef(new Value<number>(-1));
-    const { current: opacity } = useRef(runOpacityTimer(animationState, onModalShow, onModalHide, onShowConfig, onHideConfig));
+    const { current: opacity } = useRef(
+        runOpacityTimer(animationState, modalLayout.current, onModalShow, onModalHide, onShowConfig, onHideConfig),
+    );
     const { current: viewStyle } = useRef(viewStyleFnc(animationState, opacity as Animated.Adaptable<number>, modalLayout.current));
     const init = useRef(false);
 
