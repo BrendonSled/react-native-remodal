@@ -45,6 +45,13 @@ npm install react-native-remodal
 -   `onModalShow`?: () => void;
 -   `onModalHide`?: () => void;
 -   `containerStyle`?: ViewStyle;
+-   `onShowConfig`?: AnimationConfigs;
+-   `onHideConfig`?: AnimationConfigs;
+
+## AnimationConfigs
+
+-   `duration`: number;
+-   `easing`: Animated.EasingFunction;
 
 # Full Example
 
