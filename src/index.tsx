@@ -1,15 +1,6 @@
 import cuid from 'cuid';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import {
-    BackHandler,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-    TouchableWithoutFeedback,
-    ViewStyle,
-    Dimensions,
-} from 'react-native';
+import { BackHandler, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, TouchableWithoutFeedback, ViewStyle } from 'react-native';
 import Animated, { Easing } from 'react-native-reanimated';
 
 interface IReModalContext {
@@ -147,21 +138,13 @@ function Modal({
     onHideConfig?: IConfigs;
     unmountWhenNotVisible?: boolean;
 }) {
-    const modalLayout = useRef({
-        width: new Value<number>(Dimensions.get('window').width),
-        height: new Value<number>(Dimensions.get('window').height),
-    });
+    const modalLayout = useRef({ width: new Value<number>(-1), height: new Value<number>(-1) });
     const { current: animationState } = useRef(new Value<number>(-1));
     const { current: opacity } = useRef(
         runOpacityTimer(
             animationState,
             modalLayout.current,
-            () => {
-                if (onModalShow) {
-                    onModalShow();
-                }
-                setIsAnimVisible(true);
-            },
+            onModalShow,
             () => {
                 if (onModalHide) {
                     onModalHide();
@@ -178,6 +161,9 @@ function Modal({
 
     useEffect(() => {
         if (init.current) {
+            if (isVisible) {
+                setIsAnimVisible(true);
+            }
             animationState.setValue(isVisible ? State.BEGAN : State.END);
         }
         init.current = true;
@@ -194,9 +180,23 @@ function Modal({
             <TouchableWithoutFeedback onPress={onCancel}>
                 <Animated.View style={[styles.backdrop, { opacity }]} />
             </TouchableWithoutFeedback>
-            <SafeAreaView>
-                <Animated.View style={viewStyle}>{(!unmountWhenNotVisible || isAnimVisible) && children}</Animated.View>
-            </SafeAreaView>
+            {(!unmountWhenNotVisible || isAnimVisible) && (
+                <SafeAreaView>
+                    <Animated.View
+                        onLayout={({
+                            nativeEvent: {
+                                layout: { height, width },
+                            },
+                        }) => {
+                            modalLayout.current.height.setValue(height);
+                            modalLayout.current.width.setValue(width);
+                        }}
+                        style={viewStyle}
+                    >
+                        {children}
+                    </Animated.View>
+                </SafeAreaView>
+            )}
         </KeyboardAvoidingView>
     );
 }
@@ -302,7 +302,7 @@ export function ReModal({
     }, [isVisible]);
 
     useEffect(() => {
-        setConfig(id, { autoCloseWhenOpeningNextDialog, modalAnimationFunction, ...rest });
+        setConfig(id, { autoCloseWhenOpeningNextDialog, modalAnimationFunction, unmountWhenNotVisible, ...rest });
     }, [rest, autoCloseWhenOpeningNextDialog, modalAnimationFunction]);
 
     useEffect(() => {
