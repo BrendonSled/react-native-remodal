@@ -1,6 +1,15 @@
 import cuid from 'cuid';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { BackHandler, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, TouchableWithoutFeedback, ViewStyle } from 'react-native';
+import {
+    BackHandler,
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    StyleSheet,
+    TouchableWithoutFeedback,
+    ViewStyle,
+    Dimensions,
+} from 'react-native';
 import Animated, { Easing } from 'react-native-reanimated';
 
 interface IReModalContext {
@@ -123,6 +132,7 @@ function Modal({
     keyboardVerticalOffset,
     onShowConfig,
     onHideConfig,
+    unmountWhenNotVisible,
 }: {
     children: any;
     onCancel?: () => void;
@@ -135,14 +145,36 @@ function Modal({
     keyboardVerticalOffset?: number;
     onShowConfig?: IConfigs;
     onHideConfig?: IConfigs;
+    unmountWhenNotVisible?: boolean;
 }) {
-    const modalLayout = useRef({ width: new Value<number>(-1), height: new Value<number>(-1) });
+    const modalLayout = useRef({
+        width: new Value<number>(Dimensions.get('window').width),
+        height: new Value<number>(Dimensions.get('window').height),
+    });
     const { current: animationState } = useRef(new Value<number>(-1));
     const { current: opacity } = useRef(
-        runOpacityTimer(animationState, modalLayout.current, onModalShow, onModalHide, onShowConfig, onHideConfig),
+        runOpacityTimer(
+            animationState,
+            modalLayout.current,
+            () => {
+                if (onModalShow) {
+                    onModalShow();
+                }
+                setIsAnimVisible(true);
+            },
+            () => {
+                if (onModalHide) {
+                    onModalHide();
+                }
+                setIsAnimVisible(false);
+            },
+            onShowConfig,
+            onHideConfig,
+        ),
     );
     const { current: viewStyle } = useRef(viewStyleFnc(animationState, opacity as Animated.Adaptable<number>, modalLayout.current));
     const init = useRef(false);
+    const [isAnimVisible, setIsAnimVisible] = useState(isVisible);
 
     useEffect(() => {
         if (init.current) {
@@ -163,15 +195,7 @@ function Modal({
                 <Animated.View style={[styles.backdrop, { opacity }]} />
             </TouchableWithoutFeedback>
             <SafeAreaView>
-                <Animated.View
-                    onLayout={(event) => {
-                        modalLayout.current.height.setValue(event.nativeEvent.layout.height);
-                        modalLayout.current.width.setValue(event.nativeEvent.layout.width);
-                    }}
-                    style={viewStyle}
-                >
-                    {children}
-                </Animated.View>
+                <Animated.View style={viewStyle}>{(!unmountWhenNotVisible || isAnimVisible) && children}</Animated.View>
             </SafeAreaView>
         </KeyboardAvoidingView>
     );
@@ -252,6 +276,7 @@ interface IReModalProps {
     keyboardVerticalOffset?: number;
     onShowConfig?: IConfigs;
     onHideConfig?: IConfigs;
+    unmountWhenNotVisible?: boolean;
 }
 
 export function ReModal({
@@ -259,6 +284,7 @@ export function ReModal({
     isVisible,
     autoCloseWhenOpeningNextDialog = false,
     modalAnimationFunction = defaultModalAnimationStyle,
+    unmountWhenNotVisible = true,
     ...rest
 }: IReModalProps): null {
     const { setView, setVisible, setConfig } = useContext(ReModalContext);
@@ -298,6 +324,6 @@ const styles = StyleSheet.create({
     },
     backdrop: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: '#00000055',
+        backgroundColor: '#00000050',
     },
 });
