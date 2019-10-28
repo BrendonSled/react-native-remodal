@@ -58,7 +58,7 @@ npm install react-native-remodal
 ```tsx
 import React, { useState } from 'react';
 import { Button, Dimensions, Text, View } from 'react-native';
-import { ReModel } from 'react-native-remodal';
+import { ReModal } from 'react-native-remodal';
 
 export default function ModalTest(props) {
     const [open1, setOpen1] = useState(false);
@@ -66,17 +66,17 @@ export default function ModalTest(props) {
 
     return (
         <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-            <ReModel isVisible={open1} onCancel={() => setOpen1(false)}>
+            <ReModal isVisible={open1} onCancel={() => setOpen1(false)}>
                 <View style={{ width: Dimensions.get('window').width * 0.8, backgroundColor: '#fff', padding: 32 }}>
                     <Text>This is a test!</Text>
                     <Button onPress={() => setOpen2(true)} title="Show Modal #2" />
                 </View>
-            </ReModel>
-            <ReModel isVisible={open2} onCancel={() => setOpen2(false)}>
+            </ReModal>
+            <ReModal isVisible={open2} onCancel={() => setOpen2(false)}>
                 <View style={{ width: Dimensions.get('window').width * 0.8, backgroundColor: '#fff', padding: 32 }}>
                     <Text>This is another modal!</Text>
                 </View>
-            </ReModel>
+            </ReModal>
             <Button onPress={() => setOpen1(true)} title="Show Modal #1" />
             <Button onPress={() => setOpen2(true)} title="Show Modal #2" />
         </View>
